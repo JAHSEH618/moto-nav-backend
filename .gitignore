@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Local Vercel state and build artifacts (never commit deployed output)
+.vercel/
+build/
+dist/
+out/
+.next/
+coverage/
+*.tsbuildinfo
+
+# Local caches
+.cache/
+.tmp/
+tmp/
+
+# Secrets: only the template is tracked
+.env
+.env.*
+!.env.example
+
+# Editors and OS noise
+.DS_Store
+*.log
+npm-debug.log*

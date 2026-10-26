@@ -1,0 +1,20 @@
+{
+  "name": "moto-nav-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Navigation gateway for MOTO GPS: AMap routes/search behind your own HTTPS endpoint, plus OSM vector tiles.",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env dev-server.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@mapbox/vector-tile": "3.0.0",
+    "pbf": "5.1.2",
+    "pmtiles": "4.5.0"
+  }
+}
