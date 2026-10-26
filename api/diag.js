@@ -25,6 +25,30 @@ export default async function diagnose(request, response) {
   await probe(steps, "lib/vercel-app.js", () => import("../lib/vercel-app.js"));
   await probe(steps, "lib/vercel-handler.js", () => import("../lib/vercel-handler.js"));
 
+  // Upstream reachability from the function's own region: the map source needs both
+  // the build manifest and byte ranges against the archive host.
+  const upstream = [];
+  async function probeUrl(name, url, init = {}) {
+    const started = Date.now();
+    try {
+      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(8000) });
+      const body = await response.text();
+      upstream.push({
+        name,
+        status: response.status,
+        ms: Date.now() - started,
+        bytes: body.length,
+        head: body.slice(0, 60).replace(/\s+/g, " "),
+      });
+    } catch (error) {
+      upstream.push({ name, ms: Date.now() - started, error: `${error?.name}: ${error?.message}` });
+    }
+  }
+  await probeUrl("manifest", "https://build-metadata.protomaps.dev/builds.json");
+  await probeUrl("archive", "https://build.protomaps.com/20261026.pmtiles", {
+    headers: { Range: "bytes=0-63", "Accept-Encoding": "identity" },
+  });
+
   const env = process.env;
   const body = JSON.stringify({
     ok: steps.every((step) => step.ok),
@@ -38,6 +62,7 @@ export default async function diagnose(request, response) {
       WEB_ORIGIN: env.WEB_ORIGIN === undefined ? null : "set",
     },
     steps,
+    upstream,
   }, null, 2);
   response.statusCode = 200;
   response.setHeader("Content-Type", "application/json; charset=utf-8");
