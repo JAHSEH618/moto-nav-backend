@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOTO GPS gateway</title>
+<style>
+  :root { color-scheme: dark }
+  body { margin: 0; padding: 2.5rem 1.5rem; background: #08090b; color: #e8e6e3;
+         font: 15px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace }
+  h1 { font-size: 1.1rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 600 }
+  p { max-width: 46rem; color: #9b9791 }
+  pre { max-width: 46rem; padding: 1rem; overflow: auto; border: 1px solid #232629;
+        background: #0d0f11; border-radius: 2px; white-space: pre-wrap; word-break: break-word }
+  .row { display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap; margin-bottom: 1rem }
+  a { color: #e8e6e3 }
+  .tag { font-size: .78rem; padding: .1rem .45rem; border: 1px solid #2c3135; border-radius: 2px; color: #9b9791 }
+</style>
+<h1>MOTO GPS gateway</h1>
+<div class="row"><a href="/api/healthz">/api/healthz</a><a href="/api/ping">/api/ping</a><a href="/api/diag">/api/diag</a><span class="tag" id="state">checking</span></div>
+<p>This host serves the navigation gateway only: search, routes, city bounds and OSM map tiles.
+The AMap key stays server side. This page is static, so a 200 here proves static serving works
+while the endpoints below prove the functions load.</p>
+<pre id="out">…</pre>
+<script>
+const state = document.getElementById('state');
+const out = document.getElementById('out');
+fetch('/api/healthz', { cache: 'no-store' })
+  .then(async (response) => {
+    state.textContent = 'HTTP ' + response.status;
+    out.textContent = JSON.stringify(await response.json(), null, 2);
+  })
+  .catch((error) => {
+    state.textContent = 'failed';
+    out.textContent = String(error);
+  });
+</script>
