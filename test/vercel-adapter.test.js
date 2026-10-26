@@ -119,9 +119,9 @@ test("rate limits follow the address the platform injected, not a caller header"
 });
 
 test("a project without a key refuses live navigation instead of faking it", async (t) => {
-  const { server, mode } = createVercelGateway({ MOTO_PROVIDER: "disabled" });
+  const { handler, mode } = createVercelGateway({ MOTO_PROVIDER: "disabled" });
   assert.equal(mode, "disabled");
-  const base = await listen(t, server);
+  const base = await listen(t, createServer((request, response) => { void handler(request, response); }));
 
   const health = await (await fetch(`${base}/healthz`)).json();
   assert.equal(health.provider, "disabled");

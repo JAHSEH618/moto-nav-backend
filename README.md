@@ -43,6 +43,8 @@ api/v1/routes.js              /api/v1/routes
 api/v1/route-options.js       /api/v1/route-options
 api/v1/map/cities.js          /api/v1/map/cities
 api/v1/map/tiles.js           /api/v1/map/tiles?z=&x=&y=
+api/ping.js                   平台存活探针，不 import 任何业务代码
+api/diag.js                   逐个 import 模块，定位线上加载失败
 lib/vercel-handler.js         适配器：把 Function 请求喂给同一个网关实例
 lib/vercel-app.js             按环境变量组装 provider / 地图源 / 限流身份
 lib/memory-storage.js         内存瓦片缓存（与磁盘、R2 相同的异步存储契约）
@@ -153,6 +155,21 @@ curl --fail-with-body -o /tmp/tile.json -w 'HTTP %{http_code}\n' $BASE/v1/map/ti
 | 搜索 503 `AMAP_*` | Key 类型、权限、配额、出口 IP 白名单 |
 | 全部 503 `SERVER_MISCONFIGURED` | 环境变量没进 Production，或改完没重新部署 |
 | POST 400 `INVALID_JSON` | 函数没收到请求体；用上面的 `--data-binary` 复测 |
+
+### 如果 /api/healthz 直接返回 FUNCTION_INVOCATION_FAILED
+
+这是 Vercel 的兜底错误页，不带任何信息。按顺序打这两个探针，把输出贴出来即可定位：
+
+```sh
+curl -sS $BASE/ping     # 只证明运行时和 ESM 默认导出可用
+curl -sS $BASE/diag     # 逐个 import，坏在哪个模块会自己报名
+```
+
+`diag` 只回显 Node 版本、区域、环境变量**是否存在**（不返回值）和每个模块的加载结果，
+方便一眼区分「模块加载崩」和「处理请求时崩」。更细的堆栈在
+Vercel 项目 → Deployments → 该部署 → **Logs**（适配器出错时会 `console.error` 打完整堆栈）。
+
+部署稳定后这两个文件可以直接删掉，不影响网关。
 
 ## 域名与 HTTPS
 

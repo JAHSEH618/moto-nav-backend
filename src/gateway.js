@@ -145,7 +145,10 @@ export function createRateLimiter(clientAddressOf = clientAddress) {
   return rateLimit;
 }
 
-export function createGateway({
+// The gateway is a function of (request, response); the http.Server below is only one
+// host for it. Serverless platforms (Vercel) call the handler directly and await it, so
+// an escaping error surfaces as a caught exception instead of an unhandled rejection.
+export function createGatewayHandler({
   provider,
   mapProvider = null,
   allowedOrigin = "http://localhost:5173",
@@ -158,7 +161,7 @@ export function createGateway({
   }
   const rateLimit = createRateLimiter(clientAddressOf);
 
-  return createServer(async (request, response) => {
+  return async function handleGatewayRequest(request, response) {
     const requestUrl = new URL(request.url ?? "/", "http://gateway.local");
 
     if (request.method === "OPTIONS") {
@@ -337,5 +340,9 @@ export function createGateway({
         allowedOrigin,
       );
     }
-  });
+  };
+}
+
+export function createGateway(options = {}) {
+  return createServer(createGatewayHandler(options));
 }
