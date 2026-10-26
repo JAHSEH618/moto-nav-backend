@@ -99,6 +99,21 @@ MOTO_PROVIDER=fixture MOTO_MAP_PMTILES_URL=auto npm run dev
 `npm test` 不需要网络，也不需要 Key：fixture、假 fetch 和假 R2 覆盖了协议校验、限流、
 缓存与上游故障路径。
 
+## 线上
+
+| | |
+| --- | --- |
+| 首页 | `https://www.doupaw.site/`（纯 canvas 作品，见上） |
+| 网关根地址 | `https://www.doupaw.site/api/` |
+| apex | `https://doupaw.site` → 308 → `https://www.doupaw.site` |
+| 区域 | `hkg1`，函数与骑手同区 |
+| 证书 | Let's Encrypt，Vercel 自动续期；HSTS 已开 |
+
+实测（2026-10-26）：`/healthz` 200 `provider=amap`/`ready=true`；`/v1/places` 200 真实地点；
+`/v1/routes`、`/v1/route-options` 200；`/v1/map/cities` 200 有效 `bounds_wgs84`；
+`/v1/map/tiles/15/27044/12791` 200（104 条路 / 145 栋楼，`rev 20261026`）。
+瓦片冷启动 1.7–6.9 s、同实例内命中内存缓存后为毫秒级——不同实例之间不共享缓存。
+
 ## 部署到 Vercel
 
 ### 控制台
@@ -160,6 +175,7 @@ curl --fail-with-body -o /tmp/tile.json -w 'HTTP %{http_code}\n' $BASE/v1/map/ti
 | 瓦片 503 `MAP_UPSTREAM_*` | 出网到 `build.protomaps.com` / 清单域名；换固定 `.pmtiles` 地址复测 |
 | 搜索 503 `AMAP_*` | Key 类型、权限、配额、出口 IP 白名单 |
 | 全部 503 `SERVER_MISCONFIGURED` | 环境变量没进 Production，或改完没重新部署 |
+| **所有路径（含 `/`）都 500 `FUNCTION_INVOCATION_FAILED`** | 先看 **Project Settings → Framework Preset 是不是 `Other`**。设成 Node 时 Vercel 会把 `src/server.js` 当根入口包成**一个**函数，所有路径都打到它，而它只会 `listen(127.0.0.1)`，于是全 500。用 API 纠正：`PATCH /v9/projects/{id}` body `{"framework": null}` |
 | POST 400 `INVALID_JSON` | 函数没收到请求体；用上面的 `--data-binary` 复测 |
 
 ### 如果 /api/healthz 直接返回 FUNCTION_INVOCATION_FAILED
