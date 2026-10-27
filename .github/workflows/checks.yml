@@ -16,3 +16,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Verify the published OTA image and manifest
+        run: node scripts/publish_firmware.mjs --check
