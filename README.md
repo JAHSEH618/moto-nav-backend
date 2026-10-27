@@ -113,7 +113,7 @@ MOTO_PROVIDER=fixture MOTO_MAP_PMTILES_URL=auto npm run dev
 | apex | `https://doupaw.site` → 308 → `https://www.doupaw.site` |
 | 区域 | `hkg1`，函数与骑手同区 |
 | 证书 | Let's Encrypt，Vercel 自动续期；HSTS 已开 |
-| 固件 | `https://doupaw.site/firmware/moto-gps.bin` + `latest.json`（见下） |
+| 固件 | `https://www.doupaw.site/firmware/moto-gps.bin` + `latest.json`（见下） |
 
 实测（2026-10-26）：`/healthz` 200 `provider=amap`/`ready=true`；`/v1/places` 200 真实地点；
 `/v1/routes`、`/v1/route-options` 200；`/v1/map/cities` 200 有效 `bounds_wgs84`；
@@ -218,8 +218,8 @@ curl -sSI https://doupaw.site/api/healthz | head -3    # 200，且不跳回 http
 `public/` 是 Vercel 的静态站点根目录，所以 OTA 镜像和清单不需要再写一个 Function：
 
 ```text
-https://doupaw.site/firmware/moto-gps.bin   ESP32 app 镜像
-https://doupaw.site/firmware/latest.json   版本、URL、SHA-256、字节数
+https://www.doupaw.site/firmware/moto-gps.bin   ESP32 app 镜像
+https://www.doupaw.site/firmware/latest.json   版本、URL、SHA-256、字节数
 ```
 
 发布（镜像由 `moto-gps` 主仓库构建，然后拷进本仓库）：
@@ -238,8 +238,8 @@ npx vercel --prod
 验收：
 
 ```sh
-curl -sS https://doupaw.site/firmware/latest.json
-curl -sSI https://doupaw.site/firmware/moto-gps.bin   # 200 + application/octet-stream
+curl -sS https://www.doupaw.site/firmware/latest.json
+curl -sSI https://www.doupaw.site/firmware/moto-gps.bin   # 200 + application/octet-stream
 ```
 
 App 的 05 固件 →「获取 doupaw.site 最新固件」会读取这个清单并填入下载地址与摘要；
